@@ -1,0 +1,201 @@
+// Reaper JSFX: Random-Modulator
+// (c) 2025 by SynthieJunkie
+// MIT License
+
+desc:SynthieJunkie - Random-Modulator v1.0
+desc:Random-Modulator v1.0
+
+slider1:SliderClock=0<-6,6,1>Clock
+slider2:SliderReset=0<0,6,1>Reset
+slider3:SliderOffset=0<0,1,0.01>Offset
+slider4:SliderChance=100<0,100,1>Chance
+slider5:SliderPattern1=0<0,127,1>Pattern 1
+slider6:SliderPattern2=0<0,127,1>Pattern 2
+slider7:SliderPattern3=0<0,127,1>Pattern 3
+slider8:SliderPattern4=0<0,127,1>Pattern 4
+slider9:SliderMinimum=0<0,127,1>Minimum
+slider10:SliderMaximum=127<0,127,1>Maximum
+slider11:SliderSmooth=0<0,5000,1>Smooth
+slider12:SliderOut1=0<0,127,1>Out 1
+slider13:SliderOut2=0<0,127,1>Out 2
+slider14:SliderOut3=0<0,127,1>Out 3
+slider15:SliderOut4=0<0,127,1>Out 4
+slider16:SliderOut5=0<0,127,1>Out 5
+slider17:SliderOut6=0<0,127,1>Out 6
+
+@init
+Mul1 = 258280327;
+Add1 = 98765431;
+Mul2 = 238327707;
+Add2 = 76543213;
+Mul3 = 200896273;
+Add3 = 45678901;
+Mul4 = 223092871;
+Add4 = 123456789;
+Mul5 = 185302019;
+Add5 = 98765432;
+Mul6 = 214013;
+Add6 = 2531011;
+Mul7 = 1103515245;
+Add7 = 12345;
+Mul8 = 1664525;
+Add8 = 1013904223;
+Mul9 = 2147483629;
+Add9 = 2147483579;
+Mul10 = 69069;
+Add10 = 1;
+Mul11 = 214013;
+Add11 = 2531011;
+Mul12 = 16843009;
+Add12 = 826366247;
+
+Mod = 0x7FFFFFFF;
+
+Clock = pow(2, SliderClock);
+Reset = pow(2, SliderReset);
+Offset = SliderOffset;
+Pattern = SliderPattern1 + SliderPattern2 * 0x80 + SliderPattern3 * 0x4000 + SliderPattern4 * 0x200000;
+Rate = (1 - (SliderSmooth / 1000)) + srate * (SliderSmooth / 1000);
+
+CurrentBeat = -1;
+LastBeat = 0;
+
+@slider
+Clock = pow(2, SliderClock);
+Reset = pow(2, SliderReset);
+Offset = SliderOffset;
+Pattern = SliderPattern1 + SliderPattern2 * 0x80 + SliderPattern3 * 0x4000 + SliderPattern4 * 0x200000;
+Rate = (1 - (SliderSmooth / 1000)) + srate * (SliderSmooth / 1000);
+
+@block
+while (midirecv(offset, msg1, msg2, msg3))
+(
+  midisend(offset, msg1, msg2, msg3);
+);
+
+@sample
+LastState = CurrentState;
+CurrentState = play_state;
+
+CurrentState == 1 || CurrentState == 5 ?
+(
+  LastBeat = CurrentBeat;
+  CurrentBeat = (((beat_position + Offset) * Clock) | 0) & Mod;
+
+  CurrentBeat != LastBeat ?
+  (
+    CurrentBeat == 0 || CurrentBeat % Reset == 0 ?
+    (
+      SeedChance1 = Pattern;
+      SeedChance2 = Pattern;
+      SeedChance3 = Pattern;
+      SeedChance4 = Pattern;
+      SeedChance5 = Pattern;
+      SeedChance6 = Pattern;
+
+      SeedValue1 = Pattern;
+      SeedValue2 = Pattern;
+      SeedValue3 = Pattern;
+      SeedValue4 = Pattern;
+      SeedValue5 = Pattern;
+      SeedValue6 = Pattern;
+    );
+
+    SeedChance1 = (SeedChance1 * Mul1 + Add1) % Mod;
+    SeedChance1 % 100 < SliderChance ?
+    (
+      SeedValue1 = (SeedValue1 * Mul2 + Add2) % Mod;
+      LastOut1 = CurrentOut1;
+      CurrentOut1 = SeedValue1 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut1 = abs(CurrentOut1 - LastOut1);
+    );
+
+    SeedChance2 = (SeedChance2 * Mul3 + Add3) % Mod;
+    SeedChance2 % 100 < SliderChance ?
+    (
+      SeedValue2 = (SeedValue2 * Mul4 + Add4) % Mod;
+      LastOut2 = CurrentOut2;
+      CurrentOut2 = SeedValue2 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut2 = abs(CurrentOut2 - LastOut2);
+    );
+
+    SeedChance3 = (SeedChance3 * Mul5 + Add5) % Mod;
+    SeedChance3 % 100 < SliderChance ?
+    (
+      SeedValue3 = (SeedValue3 * Mul6 + Add6) % Mod;
+      LastOut3 = CurrentOut3;
+      CurrentOut3 = SeedValue3 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut3 = abs(CurrentOut3 - LastOut3);
+    );
+
+    SeedChance4 = (SeedChance4 * Mul7 + Add7) % Mod;
+    SeedChance4 % 100 < SliderChance ?
+    (
+      SeedValue4 = (SeedValue4 * Mul8 + Add8) % Mod;
+      LastOut4 = CurrentOut4;
+      CurrentOut4 = SeedValue4 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut4 = abs(CurrentOut4 - LastOut4);
+    );
+
+    SeedChance5 = (SeedChance5 * Mul9 + Add9) % Mod;
+    SeedChance5 % 100 < SliderChance ?
+    (
+      SeedValue5 = (SeedValue5 * Mul10 + Add10) % Mod;
+      LastOut5 = CurrentOut5;
+      CurrentOut5 = SeedValue5 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut5 = abs(CurrentOut5 - LastOut5);
+    );
+
+    SeedChance6 = (SeedChance6 * Mul11 + Add11) % Mod;
+    SeedChance6 % 100 < SliderChance ?
+    (
+      SeedValue6 = (SeedValue6 * Mul12 + Add12) % Mod;
+      LastOut6 = CurrentOut6;
+      CurrentOut6 = SeedValue6 / Mod * (SliderMaximum - SliderMinimum + 1) + SliderMinimum & Mod;
+      DiffOut6 = abs(CurrentOut6 - LastOut6);
+    );
+
+    slider_automate(SliderOut1);
+    slider_automate(SliderOut2);
+    slider_automate(SliderOut3);
+    slider_automate(SliderOut4);
+    slider_automate(SliderOut5);
+    slider_automate(SliderOut6);
+  );
+
+  SmoothOut1 < CurrentOut1 ? SmoothOut1 += DiffOut1 / Rate;
+  SmoothOut2 < CurrentOut2 ? SmoothOut2 += DiffOut2 / Rate;
+  SmoothOut3 < CurrentOut3 ? SmoothOut3 += DiffOut3 / Rate;
+  SmoothOut4 < CurrentOut4 ? SmoothOut4 += DiffOut4 / Rate;
+  SmoothOut5 < CurrentOut5 ? SmoothOut5 += DiffOut5 / Rate;
+  SmoothOut6 < CurrentOut6 ? SmoothOut6 += DiffOut6 / Rate;
+
+  SmoothOut1 > CurrentOut1 ? SmoothOut1 -= DiffOut1 / Rate;
+  SmoothOut2 > CurrentOut2 ? SmoothOut2 -= DiffOut2 / Rate;
+  SmoothOut3 > CurrentOut3 ? SmoothOut3 -= DiffOut3 / Rate;
+  SmoothOut4 > CurrentOut4 ? SmoothOut4 -= DiffOut4 / Rate;
+  SmoothOut5 > CurrentOut5 ? SmoothOut5 -= DiffOut5 / Rate;
+  SmoothOut6 > CurrentOut6 ? SmoothOut6 -= DiffOut6 / Rate;
+
+  abs(SmoothOut1 - CurrentOut1) <= 1 ? SmoothOut1 = CurrentOut1;
+  abs(SmoothOut2 - CurrentOut2) <= 1 ? SmoothOut2 = CurrentOut2;
+  abs(SmoothOut3 - CurrentOut3) <= 1 ? SmoothOut3 = CurrentOut3;
+  abs(SmoothOut4 - CurrentOut4) <= 1 ? SmoothOut4 = CurrentOut4;
+  abs(SmoothOut5 - CurrentOut5) <= 1 ? SmoothOut5 = CurrentOut5;
+  abs(SmoothOut6 - CurrentOut6) <= 1 ? SmoothOut6 = CurrentOut6;
+
+  SmoothOut1 = min(max(SmoothOut1, 0), 127);
+  SmoothOut2 = min(max(SmoothOut2, 0), 127);
+  SmoothOut3 = min(max(SmoothOut3, 0), 127);
+  SmoothOut4 = min(max(SmoothOut4, 0), 127);
+  SmoothOut5 = min(max(SmoothOut5, 0), 127);
+  SmoothOut6 = min(max(SmoothOut6, 0), 127);
+
+  SliderOut1 = SmoothOut1;
+  SliderOut2 = SmoothOut2;
+  SliderOut3 = SmoothOut3;
+  SliderOut4 = SmoothOut4;
+  SliderOut5 = SmoothOut5;
+  SliderOut6 = SmoothOut6;
+);
+
